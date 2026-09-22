@@ -31,3 +31,4 @@ Each project lives in its own folder with its own `README.md` explaining what it
 | 6 | [Day6](./Day6) | Password generator built with `customtkinter` — adjustable length and character types, a strength meter, and named passwords saved to a json file |
 | 7 | [Day7](./Day7) | Currency converter built with `customtkinter` — live rates from Frankfurter.app, a searchable currency picker, swap button, and offline rate caching |
 | 8 | [Day8](./Day8) | Hangman game built with `customtkinter` — category picker, on-screen keyboard, a progressive canvas drawing, and win streak tracking |
+| 9 | [Day9](./Day9) | Tic tac toe built with `customtkinter` — wooden box design with procedural wood-grain tiles, win/draw detection, a red winning-line, and score tracking |
