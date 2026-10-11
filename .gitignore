@@ -2,9 +2,9 @@ venv/
 __pycache__/
 *.pyc
 .claude/
-Day2/static/audio/
-Day4/tasks.json
-Day6/passwords.json
-Day7/rates_cache.json
-Day10/expenses.json
-Day10/budgets.json
+Day-02/static/audio/
+Day-04/tasks.json
+Day-06/passwords.json
+Day-07/rates_cache.json
+Day-10/expenses.json
+Day-10/budgets.json
