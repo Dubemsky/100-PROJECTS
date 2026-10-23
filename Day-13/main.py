@@ -81,7 +81,7 @@ def draw_rounded_rect(x1, y1, x2, y2, radius, **options):
     return canvas.create_polygon(points, smooth=True, **options)
 
 
-# puts the ball in the middle and serves it towards the given side (-1 = left, 1 = right)
+# puts the ball in the middle and serves it toward the given side
 def serve_ball(direction):
     global ball_x, ball_y, ball_vx, ball_vy, ball_speed, ball_trail, serve_delay
     ball_x = TABLE_WIDTH / 2
@@ -94,7 +94,7 @@ def serve_ball(direction):
     serve_delay = SERVE_DELAY_FRAMES
 
 
-# moves player 1's paddle up or down; in computer mode the arrow keys work too since nothing else uses them
+# moves player 1's paddle, using w/s or the arrow keys depending on mode
 def move_player():
     global player_y
     up_keys = {"w"} if game_mode == "human" else {"w", "up"}
@@ -106,7 +106,7 @@ def move_player():
     player_y = max(PADDLE_HEIGHT / 2, min(TABLE_HEIGHT - PADDLE_HEIGHT / 2, player_y))
 
 
-# moves player 2's paddle with the arrow keys, only used in human vs human mode
+# moves player 2's paddle with the arrow keys
 def move_player_two():
     global computer_y
     if "up" in keys_down:
@@ -116,8 +116,7 @@ def move_player_two():
     computer_y = max(PADDLE_HEIGHT / 2, min(TABLE_HEIGHT - PADDLE_HEIGHT / 2, computer_y))
 
 
-# moves the computer's paddle towards the ball, but only when the ball is heading its way
-# the aim error makes it miss a little so the computer can be beaten
+# moves the computer's paddle toward the ball, with a slight aim error so it can be beaten
 def move_computer():
     global computer_y
     target = ball_y + computer_aim_error if ball_vx > 0 else TABLE_HEIGHT / 2
@@ -128,7 +127,7 @@ def move_computer():
     computer_y = max(PADDLE_HEIGHT / 2, min(TABLE_HEIGHT - PADDLE_HEIGHT / 2, computer_y))
 
 
-# bounces the ball off a paddle: hitting near the edge sends it at a steeper angle, and every hit speeds it up
+# bounces the ball off a paddle, angled by where it was hit
 def bounce_off_paddle(paddle_y, direction):
     global ball_vx, ball_vy, ball_speed
     offset = (ball_y - paddle_y) / (PADDLE_HEIGHT / 2)
@@ -261,7 +260,7 @@ def end_game():
     result_frame.place(relx=0.5, rely=0.5, anchor="center")
 
 
-# resets scores and positions, then starts a fresh game in the given mode ("computer" or "human")
+# resets scores and positions, then starts a fresh game in the given mode
 def start_game(mode):
     global player_score, computer_score, player_y, computer_y, is_playing, is_paused, game_loop_id, game_mode
     if game_loop_id is not None:
@@ -333,13 +332,7 @@ ctk.CTkButton(
     menu_frame, text="Play vs Human", command=lambda: start_game("human"), width=280, height=54,
     font=("Helvetica", 16, "bold"), corner_radius=14, fg_color=TINT_COLOR, text_color="#1e1b3a", hover_color=TINT_BORDER,
     border_width=1, border_color=TINT_BORDER,
-).pack(pady=(0, 24))
-
-ctk.CTkLabel(
-    menu_frame,
-    text="Vs Computer: W / S or arrow keys\nVs Human: Player 1 uses W / S, Player 2 uses arrow keys\nSpace pauses the game",
-    font=("Helvetica", 13), text_color="#8a88a8", justify="center",
-).pack(pady=(0, 44))
+).pack(pady=(0, 50))
 
 # game screen
 game_frame = ctk.CTkFrame(app, fg_color="transparent")
@@ -347,8 +340,9 @@ game_frame = ctk.CTkFrame(app, fg_color="transparent")
 canvas = tk.Canvas(game_frame, width=TABLE_WIDTH, height=TABLE_HEIGHT, highlightthickness=0, bg=TABLE_COLOR)
 canvas.pack()
 
-button_row = ctk.CTkFrame(game_frame, fg_color="transparent")
+button_row = ctk.CTkFrame(game_frame, fg_color="transparent", height=38)
 button_row.pack(fill="x", pady=(14, 0))
+button_row.pack_propagate(False)
 
 pause_button = ctk.CTkButton(
     button_row, text="Pause", command=toggle_pause, width=110, height=38, corner_radius=12,
@@ -356,8 +350,8 @@ pause_button = ctk.CTkButton(
 )
 pause_button.pack(side="left")
 
-controls_label = ctk.CTkLabel(button_row, text="W / S or arrow keys to move", font=("Helvetica", 13), text_color="#8a88a8")
-controls_label.pack(side="left", padx=20)
+controls_label = ctk.CTkLabel(button_row, text="W / S or arrow keys to move", font=("Helvetica", 14, "bold"), text_color="#5c5a7a")
+controls_label.place(relx=0.5, rely=0.5, anchor="center")
 
 ctk.CTkButton(
     button_row, text="Menu", command=show_menu, width=110, height=38, corner_radius=12,
