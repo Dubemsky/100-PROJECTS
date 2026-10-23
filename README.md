@@ -35,3 +35,4 @@ Each project lives in its own folder with its own `README.md` explaining what it
 | 10 | [Day-10](./Day-10) | Expense tracker built with `customtkinter` — monthly and all-time totals, date range filters, a category pie chart, monthly budgets with progress bars, and CSV export |
 | 11 | [Day-11](./Day-11) | Typing speed test built with `customtkinter` — endless word stream, live letter-by-letter feedback, on-screen keyboard, a 30 second timer, and WPM/accuracy with saved best/last scores |
 | 12 | [Day-12](./Day-12) | Pomodoro timer built with `customtkinter` — auto-advancing work/break cycle, progress bar, customizable durations, sound and flash alerts, and a logged history of completed sessions |
+| 13 | [Day-13](./Day-13) | Table tennis built with `customtkinter` and a `tkinter` canvas — real-time paddle physics, a computer opponent, local Player vs Player mode, and a ball trail effect |
