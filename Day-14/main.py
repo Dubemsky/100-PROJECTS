@@ -51,7 +51,10 @@ def load_scores():
         return {}
     with open(SCORES_FILE, "r") as file:
         content = file.read().strip()
+    try:
         return json.loads(content) if content else {}
+    except json.JSONDecodeError:
+        return {}
 
 
 def save_scores(scores):
@@ -105,17 +108,19 @@ def draw_possible_numbers():
     possible_canvas.create_rectangle(left, 14, right, 40, fill=ACCENT_COLOR, outline="")
     possible_canvas.create_text(2, 6, text=str(start), anchor="w", font=("Helvetica", 11, "bold"), fill="#8a88a8")
     possible_canvas.create_text(BAR_WIDTH - 2, 6, text=str(end), anchor="e", font=("Helvetica", 11, "bold"), fill="#8a88a8")
-    possible_label.configure(text=f"{range_high - range_low + 1} numbers still possible")
+    count = range_high - range_low + 1
+    possible_label.configure(text=f"{count} number{'s' if count != 1 else ''} still possible")
 
 
 def draw_history():
     for chip in history_frame.winfo_children():
         chip.destroy()
-    for number, is_too_low in guesses:
+    for index, (number, is_too_low) in enumerate(guesses):
+        arrow = "✓" if number == secret_number else "↑" if is_too_low else "↓"
         ctk.CTkLabel(
-            history_frame, text=f"{number} {'↑' if is_too_low else '↓'}", font=("Helvetica", 14, "bold"),
+            history_frame, text=f"{number} {arrow}", font=("Helvetica", 14, "bold"),
             text_color="#1e1b3a", fg_color=TINT_COLOR, corner_radius=10, width=56, height=30,
-        ).pack(side="left", padx=3)
+        ).grid(row=index // 7, column=index % 7, padx=3, pady=2)
 
 
 def update_guesses_left():
@@ -168,12 +173,10 @@ def submit_guess(event=None):
         return
     text = guess_entry.get().strip()
     guess_entry.delete(0, "end")
-    try:
-        guess = int(text)
-    except ValueError:
+    if not (text.isascii() and text.isdigit()) or len(text) > 6:
         message_label.configure(text="Type a whole number", text_color="#dc2626")
         return
-    check_guess(guess)
+    check_guess(int(text))
 
 
 def end_game(won):
@@ -199,8 +202,11 @@ def end_game(won):
     else:
         result_title_label.configure(text="Out of guesses")
         result_detail_label.configure(text=f"The number was {secret_number}.")
-        result_note_label.configure(text="Hint: guess the middle every time. Try Show me the trick!")
-    result_frame.place(relx=0.5, rely=0.5, anchor="center")
+        if used_trick:
+            result_note_label.configure(text="Use the trick from the start of a round.")
+        else:
+            result_note_label.configure(text="Hint: guess the middle every time. Try Show me the trick!")
+    result_frame.place(relx=0.5, rely=0.58, anchor="center")
 
 
 def start_game(chosen_difficulty):
@@ -242,7 +248,8 @@ def start_trick():
     guess_entry.configure(state="disabled")
     trick_button.configure(state="disabled")
     message_label.configure(text="Always guess the middle...", text_color=ACCENT_COLOR)
-    app.after(TRICK_DELAY, lambda: trick_step(trick_generation))
+    generation = trick_generation
+    app.after(TRICK_DELAY, lambda: trick_step(generation))
 
 
 def trick_step(generation):
@@ -319,8 +326,8 @@ possible_canvas.pack(padx=14, pady=(5, 2))
 possible_label = ctk.CTkLabel(stats_card, text="", font=("Helvetica", 12, "bold"), text_color=ACCENT_COLOR)
 possible_label.pack(anchor="w", padx=14, pady=(0, 12))
 
-history_frame = ctk.CTkFrame(card, fg_color="transparent", height=32)
-history_frame.pack(padx=28, fill="x", pady=(12, 0))
+history_frame = ctk.CTkFrame(card, fg_color="transparent", height=68)
+history_frame.pack(padx=28, pady=(12, 0))
 
 button_row = ctk.CTkFrame(card, fg_color="transparent", height=36)
 button_row.pack(padx=28, fill="x", pady=(14, 18))
