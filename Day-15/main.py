@@ -32,22 +32,22 @@ SAMPLE_RATE = 44100
 VISUALIZER_WIDTH = 440
 VISUALIZER_HEIGHT = 140
 BAR_COUNT = 28
-UPDATE_MS = 33  # about 30 updates a second
+UPDATE_MS = 33
  
 songs_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "songs")
 songs = []
 current_index = -1
 song_length = 0
-song_samples = None  # the song as numbers, used by the visualiser
+song_samples = None
  
 is_playing = False
-play_started_at = 0  # time.time() when the song last started or resumed
-start_position = 0  # where in the song (seconds) it last started from
+play_started_at = 0
+start_position = 0
 is_dragging = False
  
 shuffle_on = False
-shuffle_deck = []  # songs left to play before any song repeats
-history = []  # songs played so far, for the Previous button
+shuffle_deck = []
+history = []
  
 REPEAT_MODES = ["off", "all", "one"]
 repeat_mode = "all"
@@ -55,12 +55,11 @@ repeat_mode = "all"
 bar_heights = [0] * BAR_COUNT
 tick_job = None
 loudest_seen = 1.0
-load_generation = 0  # invalidates a decode thread's result if a newer song was requested meanwhile
+load_generation = 0
 app_closing = False
-is_loading = False  # True while a song is being decoded in the background
+is_loading = False
  
  
-# ---------- loading songs ----------
  
 def find_songs(folder):
     if not os.path.isdir(folder):
@@ -101,8 +100,7 @@ def open_folder():
         load_folder(folder)
  
  
-# decoding (for the visualiser) runs on a background thread so a big file doesn't freeze the UI;
-# load_generation lets a stale result from a superseded request be ignored when it comes back
+# decodes on a background thread so big files don't freeze the UI
 def load_song(index, position=0, autoplay=False):
     global load_generation, is_loading
     is_loading = True
@@ -142,7 +140,6 @@ def _song_loaded(generation, index, path, length, samples, position, autoplay):
  
     current_index = index
     song_length = length
-    # a song you pick yourself counts as played in this shuffle round too
     if index in shuffle_deck:
         shuffle_deck.remove(index)
     song_samples = samples.mean(axis=1) if samples.ndim == 2 else samples
@@ -162,7 +159,7 @@ def _song_loaded(generation, index, path, length, samples, position, autoplay):
         save_session()
  
  
-# a file that matches the extension but won't decode: drop it and try the next one
+# drop a file that won't decode and try the next one
 def _song_load_failed(generation, index, autoplay):
     global current_index, is_loading, history, shuffle_deck
     if generation != load_generation:
@@ -170,7 +167,6 @@ def _song_load_failed(generation, index, autoplay):
     is_loading = False
     if 0 <= index < len(songs):
         songs.pop(index)
-        # every song after the broken one moves up a place, so fix the numbers we kept
         shift = lambda i: i - 1 if i > index else i
         history = [shift(i) for i in history if i != index]
         shuffle_deck = [shift(i) for i in shuffle_deck if i != index]
@@ -188,7 +184,6 @@ def _song_load_failed(generation, index, autoplay):
     load_song(index % len(songs), autoplay=autoplay)
  
  
-# ---------- playing ----------
  
 def current_position():
     if is_playing:
@@ -201,7 +196,7 @@ def play_from(position):
     start_position = max(0, min(position, song_length))
     try:
         pygame.mixer.music.play(start=start_position)
-    except pygame.error:  # a few file types can't jump to a spot
+    except pygame.error:  # some formats can't seek
         pygame.mixer.music.play()
         start_position = 0
     play_started_at = time.time()
@@ -235,7 +230,7 @@ def play_song(index):
     load_song(index, autoplay=True)
  
  
-# smart shuffle: like a deck of cards, every song plays once before any song repeats
+# every song plays once before any song repeats
 def next_shuffled_song():
     global shuffle_deck
     if len(songs) == 1:
@@ -245,7 +240,6 @@ def next_shuffled_song():
             return None
         shuffle_deck = list(range(len(songs)))
         random.shuffle(shuffle_deck)
-        # never play the same song twice in a row when a new round starts
         if shuffle_deck[-1] == current_index:
             shuffle_deck[0], shuffle_deck[-1] = shuffle_deck[-1], shuffle_deck[0]
     return shuffle_deck.pop()
@@ -269,7 +263,6 @@ def next_song():
 def previous_song():
     if not songs:
         return
-    # a few seconds in, Previous restarts the song, like most music apps
     if current_position() > 3 or not history:
         play_from(0) if is_playing else restart_paused()
         return
@@ -287,7 +280,6 @@ def restart_paused():
 def toggle_shuffle():
     global shuffle_on, shuffle_deck
     shuffle_on = not shuffle_on
-    # the song playing now counts as already played in this round
     shuffle_deck = [i for i in range(len(songs)) if i != current_index]
     random.shuffle(shuffle_deck)
     shuffle_button.configure(
@@ -335,7 +327,6 @@ def seek_relative(delta):
         update_time_label(position)
  
  
-# ---------- progress bar ----------
  
 def update_time_label(position):
     time_label.configure(text=f"{format_time(position)} / {format_time(song_length)}")
@@ -364,7 +355,6 @@ def end_drag(event=None):
         update_time_label(position)
  
  
-# ---------- visualiser ----------
  
 def bar_levels(position):
     global loudest_seen
@@ -374,18 +364,15 @@ def bar_levels(position):
     if len(chunk) < window:
         chunk = np.pad(chunk, (0, window - len(chunk)))
  
-    # split the sound into frequencies: low notes on the left, high notes on the right
     spectrum = np.abs(np.fft.rfft(chunk * np.hanning(window)))
     levels = np.array([spectrum[low:high].mean() for low, high in BAR_RANGES])
  
-    # loudness in decibels, compared with the loudest moment so far
     loudest_seen = max(loudest_seen * 0.998, levels.max(), 1.0)
     decibels = 20 * np.log10(levels / loudest_seen + 1e-9)
-    return np.clip((decibels + 50) / 50, 0, 1)  # -50 dB = empty bar, 0 dB = full bar
+    return np.clip((decibels + 50) / 50, 0, 1)
  
  
 def make_bar_ranges():
-    # each bar covers a slice of frequencies, spaced so bass and treble get fair room
     bins = np.fft.rfftfreq(2048, 1 / SAMPLE_RATE)
     edges = np.geomspace(60, 14000, BAR_COUNT + 1)
     ranges = []
@@ -405,7 +392,6 @@ def draw_visualizer(position):
     gap = 4
     bar_width = (VISUALIZER_WIDTH - gap * (BAR_COUNT + 1)) / BAR_COUNT
     for i in range(BAR_COUNT):
-        # bars jump up fast and fall slowly, so they feel smooth
         if target[i] > bar_heights[i]:
             bar_heights[i] = target[i]
         else:
@@ -421,7 +407,6 @@ def draw_visualizer(position):
 BAR_COLORS = ["#6366f1", "#7c6cf2", "#9b6cf0", "#c26ae6", "#e86ad0", "#f472b6"]
  
  
-# ---------- the main loop ----------
  
 def tick():
     if current_index >= 0:
@@ -440,7 +425,6 @@ def tick():
     tick_job = app.after(UPDATE_MS, tick)
  
  
-# ---------- remembering the last song ----------
  
 def save_session():
     data = {
@@ -475,7 +459,6 @@ def on_close():
     app.destroy()
  
  
-# ---------- playlist ----------
  
 def draw_playlist():
     for row in playlist_frame.winfo_children():
@@ -492,7 +475,6 @@ def draw_playlist():
         ).pack(fill="x", padx=4, pady=2)
  
  
-# ---------- the window ----------
  
 card = ctk.CTkFrame(app, corner_radius=22, fg_color="white", border_width=1, border_color=TINT_BORDER)
 card.pack(padx=28, pady=20)
@@ -570,7 +552,6 @@ playlist_frame = ctk.CTkScrollableFrame(card, width=440, height=170, corner_radi
 playlist_frame.pack(padx=28, pady=(8, 22))
  
  
-# ---------- start ----------
  
 session = load_session()
 volume_slider.set(session.get("volume", 0.7))
@@ -578,7 +559,6 @@ change_volume(volume_slider.get())
 saved_folder = session.get("folder")
 load_folder(saved_folder if saved_folder and os.path.isdir(saved_folder) else songs_folder)
  
-# pick up where you left off: same song, same spot, paused
 if session.get("song") in songs:
     load_song(songs.index(session["song"]), session.get("position", 0))
 if session.get("shuffle"):
