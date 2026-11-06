@@ -38,3 +38,4 @@ Each project lives in its own folder with its own `README.md` explaining what it
 | 13 | [Day-13](./Day-13) | Table tennis built with `customtkinter` and a `tkinter` canvas — real-time paddle physics, a computer opponent, local Player vs Player mode, and a ball trail effect |
 | 14 | [Day-14](./Day-14) | Number guessing game built with `customtkinter` — Easy/Medium/Hard difficulty, temperature and possible numbers bars, guess history chips, a trick to reveal the perfect strategy, and saved best scores |
 | 15 | [Day-15](./Day-15) | Music player built with `customtkinter` and `pygame` — folder-based playlist, shuffle, repeat modes, keyboard shortcuts, a live FFT visualizer, and a remembered session |
+| 16 | [Day-16](./Day-16) | Snake game built with `pygame` — play it yourself or switch on a three-level autopilot that uses path planning and tail-chasing, with sound effects and saved best scores |
